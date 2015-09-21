@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+{% raw %}
+
+<div ng-app="myapp" ng-controller="MainCtrl">
+	<h1>List</h1>
+
+	<table>
+		<tr ng-repeat="design in designs">
+			<td>
+				<a href="https://www.threadless.com/product/{{ design.design_id }}/">{{ design.name }}</a></td>
+			<td><img ng-src="{{ design.image_url }}"/></td>
+			<td>{{ design.price }}</td>
+			<td>
+				<button ng-click="hide($index, design.id)">Hide</button>
+			</td>
+		</tr>
+	</table>
+
+</div>
+
+
+{% endraw %}
+
+<script>
+	var app = angular.module('myapp', [])
+
+	app.controller('MainCtrl', function($scope, $http) {
+		console.log('hi!');
+
+		$http
+			.get('/api/design/?status=1')
+			.success(function(data) {
+				$scope.designs = data.objects
+			})
+
+		$scope.hide = function(index, id) {
+			$http
+				.get('/design/' + id + '/hide')
+				.success(function() {
+					$scope.designs.splice(index, 1)
+				})
+		}
+
+	})
+
+</script>
+{% endblock %}
