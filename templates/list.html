@@ -31,9 +31,9 @@
 		console.log('hi!');
 
 		$http
-			.get('/api/design/?status=1')
+			.get('/uncategorized')
 			.success(function(data) {
-				$scope.designs = data.objects
+				$scope.designs = data.data
 			})
 
 		$scope.hide = function(index, id) {

@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from flask_peewee.auth import Auth
 from flask_peewee.db import Database
 from flask_peewee.admin import Admin, ModelAdmin
@@ -26,11 +26,20 @@ class Design(db.Model):
   price = FloatField(default=0.0)
 
 class DesignResource(RestResource):
-    paginate_by = 100
+  paginate_by = 100
+
+class DesignAdmin(ModelAdmin):
+    columns = ('name', 'image_url', 'status', 'price')
 
 api = RestAPI(app)
 api.register(Design, DesignResource)
 api.setup()
+
+auth = Auth(app, db)
+admin = Admin(app, auth)
+admin.register(Design, DesignAdmin)
+
+admin.setup()
 
 @app.route("/")
 def home():
@@ -42,6 +51,16 @@ def hide(id):
   design.status = -5
   design.save()
   return "OK"
+
+@app.route("/uncategorized")
+def show_uncategorized():
+  designs = Design.select().where(Design.status == 0).limit(100)
+
+  uncategorized = []
+  for design in designs:
+    uncategorized.append({ "id": design.id, "image_url": design.image_url })
+
+  return jsonify(data=uncategorized)
 
 if __name__ == '__main__':
   

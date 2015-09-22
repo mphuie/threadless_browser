@@ -7,7 +7,7 @@ from app import Design
 from peewee import DoesNotExist
 
 
-for i in range(1,5,1):
+for i in range(1,15,1):
   print i
   url = 'https://www.threadless.com/catalog/view,48/order,popular/page,%d' % i
 
