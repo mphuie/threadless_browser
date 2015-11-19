@@ -7,7 +7,7 @@ from flask_peewee.rest import RestAPI, RestResource
 from peewee import *
 
 DATABASE = {
-    'name': 'example.db',
+    'name': 'threadless.db',
     'engine': 'peewee.SqliteDatabase',
 }
 DEBUG = True
@@ -23,7 +23,13 @@ class Design(db.Model):
   name = TextField()
   image_url = TextField()
   status = IntegerField(default=0)
+
+class Product(db.Model):
+  name = TextField()
+  size = TextField()
+  in_stock = BooleanField(null=True)
   price = FloatField(default=0.0)
+  design = ForeignKeyField(Design, related_name='products', null=True)
 
 class DesignResource(RestResource):
   paginate_by = 100
@@ -45,12 +51,36 @@ admin.setup()
 def home():
   return render_template("list.html")
 
+@app.route('/myfilter')
+def myfilter():
+  designs_query = Design.raw("select * from design where id in (SELECT distinct(design_id) FROM  product where size = 'L' and name like '%Men%' and price < 30 limit 30)")
+  designs = [{ 'name': d.name, 'id': d.id, 'design_id': d.design_id } for d in designs_query]
+  return render_template("myfilter.html", designs=designs)
+
+@app.route('/api/myfilter')
+def myfilter_api():
+  designs_query = Design.raw("select * from design where id in (SELECT distinct(design_id) FROM  product where size = 'L' and name like '%Men%' and price < 30 limit 150) and status = 0")
+  designs = [{ 'name': d.name, 'id': d.id, 'design_id': d.design_id, 'image_url': d.image_url } for d in designs_query]
+  return jsonify(designs=designs)
+
+@app.route('/api/design/<int:id>')
+def design_detail(id):
+  pass
+
 @app.route("/design/<int:id>/hide")
 def hide(id):
   design = Design.get(Design.id == id)
   design.status = -5
   design.save()
   return "OK"
+
+@app.route("/design/<int:id>/keep")
+def keep(id):
+  design = Design.get(Design.id == id)
+  design.status = 5
+  design.save()
+  return "OK"
+
 
 @app.route("/uncategorized")
 def show_uncategorized():
@@ -63,7 +93,5 @@ def show_uncategorized():
   return jsonify(data=uncategorized)
 
 if __name__ == '__main__':
-  
   Design.create_table(fail_silently=True)
-
   app.run()

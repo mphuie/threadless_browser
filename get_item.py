@@ -1,51 +1,35 @@
 import requests
 import re
 from bs4 import BeautifulSoup
-
-from app import Design
-
-
-for design in Design.select().where(Design.status == 0).limit(25):
-	print design.name
-	url = "https://www.threadless.com/product/%d" % design.design_id
-
-	r = requests.get(url, verify=False)
-	soup = BeautifulSoup(r.text, "html.parser")
-
-	products = soup.find_all("div", { "class": "item_group" })
+from app import Design, Product
 
 
-	found_product = False
-	for product in products:
-		title = product.find("h2")
+Product.create_table(fail_silently=True)
 
-		# if "Mens Tee" in title.text:
-		if "Mens Tee" in title.text:
+for design in Design.select().where(Design.status == 0).limit(1800):
+    print design.name
 
-			price = title.find("span", { "class": "active_price" })
-			print price.text
+    if design.products.count() > 0:
+        continue
+    print design.design_id
+    url = "https://www.threadless.com/product/%d" % design.design_id
 
-			design.price = float(price.text.replace("$", ""))
-			# print title.text
-			sizes = product.find_all("li")
-			for size in sizes:
-				
-				if size.text.strip()[0:1] == "L":
-					print "FOUND SIZE L"
+    r = requests.get(url, verify=False)
+    soup = BeautifulSoup(r.text, "html.parser")
 
-					found_product = True
-					if size.has_attr("class"):
-						print "HASS CLASS"
-						if 'disabled' in size.get("class"):
-							print "not available!!!"
-							design.status = -1
-						else:
-							design.status = 1
-					else:
-						print "available!!"
-						design.status = 1
-	if found_product == False:
-		design.status = -2
-	design.save()
+    products = soup.find_all("div", { "class": "th-selectable-option" })
 
+    for product in products:
+        title = product.attrs['data-glname']
 
+        sizes = product.find('div', { 'class': 'size-buttons' }).find_all('a')
+        for size in sizes:
+            product_dict = {}
+            product_dict['name'] = title
+            product_dict['size'] = size.attrs['data-gllabel']
+            product_dict['price'] = size.attrs['data-glprice']
+            product_dict['design'] = design
+
+            print "%s - %s" % (title, product_dict['size'])
+
+            Product.create(**product_dict)

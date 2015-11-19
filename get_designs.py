@@ -1,13 +1,12 @@
 import requests
 import re
 from bs4 import BeautifulSoup
-
 from app import Design
-
 from peewee import DoesNotExist
 
+Design.create_table(fail_silently=True)
 
-for i in range(1,15,1):
+for i in range(1,38,1):
   print i
   url = 'https://www.threadless.com/catalog/view,48/order,popular/page,%d' % i
 
