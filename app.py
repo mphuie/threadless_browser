@@ -59,9 +59,21 @@ def myfilter():
 
 @app.route('/api/myfilter')
 def myfilter_api():
-  designs_query = Design.raw("select * from design where id in (SELECT distinct(design_id) FROM  product where size = 'L' and name like '%Men%' and price < 30 limit 150) and status = 0")
+  designs_query = Design.raw("select * from design where id in (SELECT distinct(design_id) FROM  product where size = 'L' and name like '%Men%' and price < 50 ) and status = 0")
   designs = [{ 'name': d.name, 'id': d.id, 'design_id': d.design_id, 'image_url': d.image_url } for d in designs_query]
   return jsonify(designs=designs)
+
+@app.route('/api/keeps')
+def keeps_api():
+  print 'hi!'
+  designs_query = Design.select().where(Design.status > 0)
+  designs = [{ 'name': d.name, 'id': d.id, 'design_id': d.design_id, 'image_url': d.image_url } for d in designs_query]
+  return jsonify(designs=designs)
+
+@app.route('/keeps')
+def mykeeps():
+  return render_template("keeps.html")
+
 
 @app.route('/api/design/<int:id>')
 def design_detail(id):

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+{% raw %}
+
+<div ng-app="myapp" ng-controller="MainCtrl">
+
+  <hotkey bind="h" invoke="hideActionKey($event)" />
+  <hotkey bind="k" invoke="keepActionKey($event)" />
+
+  <h1>List</h1>
+
+  <table>
+    <tr ng-repeat="design in designs">
+      <td>
+        <a href="https://www.threadless.com/product/{{ design.design_id }}/">{{ design.name }}</a></td>
+      <td><img ng-src="{{ design.image_url }}"/></td>
+      <td>{{ design.price }}</td>
+      <td>
+        <button ng-click="hide($index, design.id)">Hide</button>
+        <button ng-click="keep($index, design.id)">Keep</button>
+      </td>
+    </tr>
+  </table>
+
+</div>
+
+
+{% endraw %}
+
+<script>
+  var app = angular.module('myapp', ['drahak.hotkeys'])
+
+  app.controller('MainCtrl', function($scope, $http) {
+    console.log('hi!');
+
+    $http
+      .get('/api/keeps')
+      .success(function(data) {
+        $scope.designs = data.designs
+      })
+
+    $scope.hide = function(index, id) {
+      $http
+        .get('/design/' + id + '/hide')
+        .success(function() {
+          $scope.designs.splice(index, 1)
+        })
+    }
+
+    $scope.keep = function(index, id) {
+      $http
+        .get('/design/' + id + '/keep')
+        .success(function() {
+          $scope.designs.splice(index, 1)
+        })
+    }
+
+    $scope.hideActionKey = function(e) {
+      var design = $scope.designs[0];
+      $http
+        .get('/design/' + design.id + '/hide')
+        .success(function() {
+          $scope.designs.splice(0, 1)
+        })
+      // console.log(e)
+    }
+
+    $scope.keepActionKey = function(e) {
+      var design = $scope.designs[0];
+      $http
+        .get('/design/' + design.id + '/keep')
+        .success(function() {
+          $scope.designs.splice(0, 1)
+        })
+      // console.log(e)
+    }
+
+  })
+
+</script>
+{% endblock %}
